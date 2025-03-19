@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  db_sone2:
+    image: postgres:9.4
+    container_name: db_sone2
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_SONE2}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgresql/data_odoo8:/var/lib/postgresql/data
+    networks:
+      - odoo-network
+
+  db_ndayan:
+    image: postgres:9.4
+    container_name: db_ndayan
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NDAYAN}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgresql/data_ndayan:/var/lib/postgresql/data
+    networks:
+      - odoo-network
+
+  db_ndille:
+    image: postgres:9.4
+    container_name: db_ndille
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NDILLE}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgresql/data_ndille:/var/lib/postgresql/data
+    networks:
+      - odoo-network
+
+  sone2:
+    build: ./sone2
+    container_name: sone2
+    restart: always
+    env_file: .env
+    depends_on:
+      - db_sone2
+    ports:
+      - "8069:8069"
+    volumes:
+      - ./data/odoo8:/var/lib/odoo
+    networks:
+      - odoo-network
+
+  ndayan:
+    build: ./ndayan
+    container_name: ndayan
+    restart: always
+    env_file: .env
+    depends_on:
+      - db_ndayan
+    ports:
+      - "8071:8069"
+    volumes:
+      - ./data/ndayan:/var/lib/odoo
+    networks:
+      - odoo-network
+
+  ndille:
+    build: ./ndille
+    container_name: ndille
+    restart: always
+    env_file: .env
+    depends_on:
+      - db_ndille
+    ports:
+      - "8070:8069"
+    volumes:
+      - ./data/ndille:/var/lib/odoo
+    networks:
+      - odoo-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    restart: always
+    volumes:
+      - ./nginx/sites-available:/etc/nginx/sites-available
+      - ./nginx/sites-enabled:/etc/nginx/sites-enabled
+    ports:
+      - "8080:80"
+      - "443:443"
+    depends_on:
+      - sone2
+      - ndayan
+      - ndille
+    networks:
+      - odoo-network
+
+networks:
+  odoo-network:
+    driver: bridge
+
